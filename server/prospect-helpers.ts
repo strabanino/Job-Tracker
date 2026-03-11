@@ -50,6 +50,19 @@ export function validateProspect(data: Record<string, unknown>): { valid: boolea
   return { valid: errors.length === 0, errors };
 }
 
+export function filterProspectsBySearch(
+  prospects: { companyName: string; roleTitle: string }[],
+  query: string
+): { companyName: string; roleTitle: string }[] {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return prospects;
+  return prospects.filter(
+    (p) =>
+      p.companyName.toLowerCase().includes(trimmed) ||
+      p.roleTitle.toLowerCase().includes(trimmed)
+  );
+}
+
 export function isTerminalStatus(status: string): boolean {
   return status === "Rejected" || status === "Withdrawn" || status === "Offer";
 }
