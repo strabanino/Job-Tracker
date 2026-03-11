@@ -1,4 +1,4 @@
-import { validateProspect } from "../prospect-helpers";
+import { validateProspect, filterProspectsBySearch } from "../prospect-helpers";
 
 describe("prospect creation validation", () => {
   test("rejects a blank company name", () => {
@@ -97,5 +97,52 @@ describe("salary validation", () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors).toContain("Salary must be a valid number");
+  });
+});
+
+describe("search filtering", () => {
+  const prospects = [
+    { companyName: "Google", roleTitle: "Software Engineer" },
+    { companyName: "Meta", roleTitle: "Product Manager" },
+    { companyName: "Apple", roleTitle: "Designer" },
+    { companyName: "Amazon", roleTitle: "Software Engineer" },
+  ];
+
+  test("filters by company name", () => {
+    const result = filterProspectsBySearch(prospects, "Google");
+    expect(result).toHaveLength(1);
+    expect(result[0].companyName).toBe("Google");
+  });
+
+  test("filters by role title", () => {
+    const result = filterProspectsBySearch(prospects, "Designer");
+    expect(result).toHaveLength(1);
+    expect(result[0].companyName).toBe("Apple");
+  });
+
+  test("is case-insensitive", () => {
+    const result = filterProspectsBySearch(prospects, "google");
+    expect(result).toHaveLength(1);
+    expect(result[0].companyName).toBe("Google");
+  });
+
+  test("returns multiple matches", () => {
+    const result = filterProspectsBySearch(prospects, "Software Engineer");
+    expect(result).toHaveLength(2);
+  });
+
+  test("returns empty array when no match", () => {
+    const result = filterProspectsBySearch(prospects, "Netflix");
+    expect(result).toHaveLength(0);
+  });
+
+  test("returns all prospects for empty query", () => {
+    const result = filterProspectsBySearch(prospects, "");
+    expect(result).toHaveLength(4);
+  });
+
+  test("returns all prospects for whitespace-only query", () => {
+    const result = filterProspectsBySearch(prospects, "   ");
+    expect(result).toHaveLength(4);
   });
 });

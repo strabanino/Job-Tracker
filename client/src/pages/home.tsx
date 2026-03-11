@@ -4,7 +4,7 @@ import type { Prospect } from "@shared/schema";
 import { STATUSES, INTEREST_LEVELS } from "@shared/schema";
 import { ProspectCard } from "@/components/prospect-card";
 import { AddProspectForm } from "@/components/add-prospect-form";
-import { Briefcase, Plus } from "lucide-react";
+import { Briefcase, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
@@ -39,12 +40,14 @@ function KanbanColumn({
   isLoading,
   filter,
   onFilterChange,
+  hasSearchQuery,
 }: {
   status: string;
   prospects: Prospect[];
   isLoading: boolean;
   filter: string;
   onFilterChange: (value: string) => void;
+  hasSearchQuery: boolean;
 }) {
   const filteredProspects =
     filter === "All"
@@ -109,7 +112,11 @@ function KanbanColumn({
               data-testid={`empty-${slugifiedStatus}`}
             >
               <p className="text-xs text-muted-foreground">
-                {filter === "All" ? "No prospects" : `No ${filter} interest prospects`}
+                {hasSearchQuery
+                  ? "No matching results"
+                  : filter === "All"
+                    ? "No prospects"
+                    : `No ${filter} interest prospects`}
               </p>
             </div>
           ) : (
@@ -125,6 +132,7 @@ function KanbanColumn({
 
 export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
     () => Object.fromEntries(STATUSES.map((s) => [s, "All"]))
   );
@@ -133,9 +141,18 @@ export default function Home() {
     queryKey: ["/api/prospects"],
   });
 
+  const trimmedSearch = searchQuery.trim().toLowerCase();
+  const visibleProspects = trimmedSearch
+    ? (prospects ?? []).filter(
+        (p) =>
+          p.companyName.toLowerCase().includes(trimmedSearch) ||
+          p.roleTitle.toLowerCase().includes(trimmedSearch)
+      )
+    : (prospects ?? []);
+
   const groupedByStatus = STATUSES.reduce(
     (acc, status) => {
-      acc[status] = (prospects ?? []).filter((p) => p.status === status);
+      acc[status] = visibleProspects.filter((p) => p.status === status);
       return acc;
     },
     {} as Record<string, Prospect[]>,
@@ -165,6 +182,16 @@ export default function Home() {
                 </p>
               </div>
             </div>
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search jobs"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-9 text-sm"
+                data-testid="input-search"
+              />
+            </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" data-testid="button-add-prospect">
@@ -193,6 +220,7 @@ export default function Home() {
               isLoading={isLoading}
               filter={columnFilters[status]}
               onFilterChange={(value) => handleFilterChange(status, value)}
+              hasSearchQuery={trimmedSearch.length > 0}
             />
           ))}
         </div>
