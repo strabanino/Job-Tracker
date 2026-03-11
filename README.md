@@ -201,3 +201,4 @@ The `WHERE NOT EXISTS` clause prevents duplicate inserts if data already exists.
 | `POST`   | `/api/prospects`       | Creates a prospect (validates with Zod)  |
 | `PATCH`  | `/api/prospects/:id`   | Updates provided fields on a prospect    |
 | `DELETE` | `/api/prospects/:id`   | Deletes a prospect, returns 204          |
+Testing Commit to Gits
